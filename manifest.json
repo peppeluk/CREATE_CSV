@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Generatore CSV Articoli",
+  "version": "1.0",
+  "permissions": ["storage"],
+  "description": "Genera CSV strutturati da colonne incollate",
+  "action": {
+    "default_popup": "index.html"
+  }
+}

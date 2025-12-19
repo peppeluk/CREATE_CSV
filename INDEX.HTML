@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Generatore CSV Articoli</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Generatore CSV per importazione articoli e ordini a fornitore</h1>
+    <p class="subtitle">Incolla le colonne, valida i dati e genera il CSV formattato</p>
+  </header>
+
+  <!-- ================= DATI GLOBALI ================= -->
+  <section class="panel">
+    <h2>1️⃣ Dati globali</h2>
+
+    <label class="field">
+      <span>Codice Fornitore</span>
+      <input type="text" id="fornitore" placeholder="Es. 100648" oninput="autosave(); update();">
+    </label>
+  </section>
+
+  <!-- ================= COLONNE ================= -->
+  <section class="panel">
+    <h2>2️⃣ Incolla colonne</h2>
+
+    <label class="field">
+      <span>Codice Articolo</span>
+      <textarea id="codice" placeholder="Una riga = un articolo" oninput="autosave(); update();"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Descrizione articolo</span>
+      <textarea id="descrizione" placeholder="Max 70 caratteri (35 + 35)" oninput="autosave(); update();"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Codice a barre</span>
+      <textarea id="barcode" placeholder="EAN / Barcode" oninput="autosave(); update();"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Costo</span>
+      <textarea id="costo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Quantità ordine fornitore</span>
+      <textarea id="quantita" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+    </label>
+
+    <div class="info">
+      <span id="righeInfo">Righe rilevate: 0</span>
+    </div>
+  </section>
+
+  <!-- ================= AZIONI ================= -->
+  <section class="actions">
+    <button id="genera" onclick="generaCSV()" disabled>
+      ⬇️ Genera CSV importazione Articoli
+    </button>
+
+    <button id="genera_ordine" onclick="generaCSVOrdineFornitore()" disabled>
+   ⬇️ Genera CSV ORDINE FORNITORE
+    </button>
+
+    <button id="reset">
+      🔄 Reset
+    </button>
+  </section>
+
+  <footer>
+    <small>generatore CSV per importazione aritcoli su eB
+    <br>Creato da Giuseppe Lucchese - 2025    
+    </small>
+
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
