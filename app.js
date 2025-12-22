@@ -6,27 +6,39 @@ function autosave() {
     descrizione: document.getElementById("descrizione").value,
     barcode: document.getElementById("barcode").value,
     costo: document.getElementById("costo").value,
-    quantita: document.getElementById("quantita").value
+    quantita: document.getElementById("quantita").value,
+    prezzo: document.getElementById("prezzo").value
   };
-/* document.addEventListener("DOMContentLoaded", restore);
- */
-  chrome.storage.local.set({ [STATE_KEY]: state });
+// salvataggio nello storage di Chrome
+ // chrome.storage.local.set({ [STATE_KEY]: state });
+ // salvataggio con modulo Storage
+  Storage.set(STATE_KEY, state);
 }
 function restore() {
-  chrome.storage.local.get(STATE_KEY, (data) => {
-    if (!data[STATE_KEY]) return;
+  Storage.get(STATE_KEY, (state) => {
+    if (!state) return;
 
-    const s = data[STATE_KEY];
-
-    document.getElementById("fornitore").value = s.fornitore || "";
-    document.getElementById("codice").value = s.codice || "";
-    document.getElementById("descrizione").value = s.descrizione || "";
-    document.getElementById("barcode").value = s.barcode || "";
-    document.getElementById("costo").value = s.costo || "";
-    document.getElementById("quantita").value = s.quantita || "";  
+    document.getElementById("fornitore").value   = state.fornitore   || "";
+    document.getElementById("codice").value      = state.codice      || "";
+    document.getElementById("descrizione").value = state.descrizione || "";
+    document.getElementById("barcode").value     = state.barcode     || "";
+    document.getElementById("costo").value       = state.costo       || "";
+    document.getElementById("quantita").value    = state.quantita    || "";
+    document.getElementById("prezzo").value      = state.prezzo      || "";
 
     update();
   });
+}
+
+function resetAll() {
+  ["fornitore", "codice", "descrizione", "barcode", "costo", "quantita", "prezzo"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+  Storage.remove(STATE_KEY);
+  update();
 }
 
 // blocco inizializzazione DOM
@@ -36,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
   restore();
 
   // aggancio eventi input
-  ["codice", "descrizione", "barcode", "costo", "fornitore","quantita"]
+  ["codice", "descrizione", "barcode", "costo", "fornitore","quantita", "prezzo"]
     .forEach(id => {
       document.getElementById(id).addEventListener("input", () => {
         autosave();
@@ -52,14 +64,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("genera_ordine")
   .addEventListener("click", generaCSVOrdineFornitore);
 
+  // bottone genera listino di vendita
+  document.getElementById("genera_listino")
+  .addEventListener("click", generaCSVlistino);
+
   // bottone reset
   document.getElementById("reset")
+    .addEventListener("click", resetAll);
+
+  /*document.getElementById("reset")
     .addEventListener("click", () => {
       chrome.storage.local.remove(STATE_KEY);
-      ["fornitore","codice","descrizione","barcode","costo", "quantita"]
+      ["fornitore","codice","descrizione","barcode","costo", "quantita", "prezzo"]
         .forEach(id => document.getElementById(id).value = "");
       update();
-    });
+    });*/
 
 });
 
@@ -110,7 +129,13 @@ function parseColumn(text) {
     .filter(v => v !== "");
 }
 
-const fields = ["codice", "descrizione", "barcode", "costo", "quantita"];
+function parseColumnWithEmpty(text) {
+  return text
+    .split(/\r?\n/)
+    .map(v => v.trim()); 
+    // Rimosso .filter(v => v !== "") per mantenere le righe vuote
+}
+const fields = ["codice", "descrizione", "barcode", "costo", "quantita","prezzo"];
 
 fields.forEach(id => {
   document.getElementById(id).addEventListener("input", update);
@@ -121,14 +146,15 @@ function update() {
   const columns = {
     codice: parseColumn(document.getElementById("codice").value),
     descrizione: parseColumn(document.getElementById("descrizione").value),
-    barcode: parseColumn(document.getElementById("barcode").value),
-    costo: parseColumn(document.getElementById("costo").value),
-    quantita: parseColumn(document.getElementById("quantita").value)  
+    barcode: parseColumnWithEmpty(document.getElementById("barcode").value),
+    costo: parseColumnWithEmpty(document.getElementById("costo").value),
+    quantita: parseColumn(document.getElementById("quantita").value),
+    prezzo: parseColumn(document.getElementById("prezzo").value)
   };
 
   // numero righe
   //defnisco colonne da controllare
-  const colonnedaControllare = ["codice", "descrizione", "barcode"];
+  const colonnedaControllare = ["codice", "descrizione", /*"barcode"*/];
   //const counts = Object.values(columns).map(col => col.length);
   const counts = colonnedaControllare.map(key => columns[key].length);
 
@@ -184,27 +210,61 @@ function update() {
     //quantitaErrors > 0 ||
     //costErrors > 0 ||
     !fornitoreOk;
+
+    // abilita/disabilita genera CSV listino di vendita
+  document.getElementById("genera_listino").disabled =
+    !allEqual ||
+    max === 0 ||
+    descrErrors > 0 ||
+    //prezzoErrors > 0 ||
+    !fornitoreOk;
 }
+
 function generaCSV() {
-
-alert("GENERA CSV Importazione articoli");
-  console.log("generaCSV avviata");  
-    const today = new Date().toLocaleDateString("it-IT");
-
+const conferma =  confirm("Vuoi scaricare CSV importazione articoli?");
+if (!conferma) {
+  console.log("Download CSV annullato dall'utente");
+  return; // l'utente ha annullato l'operazione
+} 
+const today = new Date().toLocaleDateString("it-IT");
+const hour = String(new Date().getHours()).padStart(2, '0');
+const minute = String(new Date().getMinutes()).padStart(2, '0');
+const second = String(new Date().getSeconds()).padStart(2, '0');
+const Time = ` ${hour}:${minute}:${second}`; // formato "dd/mm/yyyy HH:MM:SS"
   // === CAMPI GLOBALI ===
   const fornitore = document.getElementById("fornitore").value.trim();
 
   // === COLONNE PER-RIGA ===
   const codice = parseColumn(document.getElementById("codice").value);
   const descrizioni = parseColumn(document.getElementById("descrizione").value);
-  const barcode = parseColumn(document.getElementById("barcode").value);
-  const costo = parseColumn(document.getElementById("costo").value);
+  const barcode = parseColumnWithEmpty(document.getElementById("barcode").value);
+  const costo = parseColumnWithEmpty(document.getElementById("costo").value);
   //const quantita = parseColumn(document.getElementById("quantita").value);
 
   // numero righe
 
   const rows = codice.length;
+/*s
+  //inserimento per individuare articoli senza barcode e lasciarli vuoti
+for (let i = 0; i < rows; i++) {
+    if (!barcode[i] || barcode[i].trim() === "") {
+      articoliSenzaBarcode.push(`Riga ${i + 1}: ${codice[i]}`);
+    }
+  }
 
+  // Prepara il messaggio di conferma
+  let messaggio = "Vuoi scaricare CSV importazione articoli?";
+  if (articoliSenzaBarcode.length > 0) {
+    messaggio = `ATTENZIONE: ${articoliSenzaBarcode.length} articoli non hanno il barcode:\n\n` + 
+                articoliSenzaBarcode.slice(0, 10).join("\n") + 
+                (articoliSenzaBarcode.length > 10 ? "\n..." : "") + 
+                "\n\nVuoi procedere comunque con il download?";
+  }
+
+    const confermabarcode = confirm(messaggio);
+  if (!confermabarcodes) return; // l'utente ha annullato l'operazione */
+
+  // === COSTRUZIONE CSV ===
   let output = [];
 
   // === HEADER CSV ===
@@ -250,12 +310,12 @@ alert("GENERA CSV Importazione articoli");
       fornitore,                 // COD. FORNITORE (ripetuto)
       "",                        // COD. ALTERNATIVO
       "",                        // stato
-      barcode[i],                // CODICE A BARRE
+      barcode[i] || "",    // CODICE A BARRE lascia riga vuota se non presente
       "",                        // CODICE IVA
       "1",                       // QTA X CONF
       "NR",                      // UNI MIS
       //costo[i].replace(",", "."),// Costo
-     costo[i] || "",        // Costo senza conversione
+     costo[i] || "",        // Costo senza conversione e lascia vuoto se non presente
       "",                        // NOTE
       "0",                       // QUANTITA MIN. ORDINABILE
       "F",                       // TIPO C/F
@@ -281,10 +341,10 @@ alert("GENERA CSV Importazione articoli");
   }
 
   // === DOWNLOAD ===
-  const blob = new Blob([output.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([output.join("\r\n")], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "articoli_generati.csv";
+  link.download = "articoli_" + Time + ".csv";
   link.click();
 }
 /////genera CSV ordine fornitore
@@ -298,10 +358,20 @@ if (quantita.some(q => q === "" || isNaN(q))) {
   alert("Quantità non valida");
   return;
 } */
+const hour = String(new Date().getHours()).padStart(2, '0');
+const minute = String(new Date().getMinutes()).padStart(2, '0');
+const second = String(new Date().getSeconds()).padStart(2, '0');
+const Time = ` ${hour}:${minute}:${second}`; // formato "dd/mm/yyyy HH:MM:SS"
 
-  alert("GENERA CSV Importazione ordine fornitore");
-  console.log("generaCSV avviata");  
-  
+ /* alert("GENERA CSV Importazione ordine fornitore");
+  console.log("generaCSV avviata");*/  
+
+  const conferma = confirm("Vuoi scaricare  file importazione ordine fornitore?");
+  if (!conferma) {
+    console.log("Download CSV annullato dall'utente");
+    return; // l'utente ha annullato l'operazione
+  }
+
   // === CAMPI GLOBALI ===
   const fornitore = document.getElementById("fornitore").value.trim();
 
@@ -333,10 +403,111 @@ if (quantita.some(q => q === "" || isNaN(q))) {
  const blob = new Blob([output.join("\n")], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "ordini_fornitore.csv";
+  link.download = "ordine_" + Time + ".csv";
   link.click();
   //downloadCSV(output, "ordine_fornitore.csv");
 }
 
+  //genera CSV listino di vendita
+function generaCSVlistino() {
+const today = new Date().toLocaleDateString("it-IT");
+const hour = String(new Date().getHours()).padStart(2, '0');
+const minute = String(new Date().getMinutes()).padStart(2, '0');
+const second = String(new Date().getSeconds()).padStart(2, '0');
+const Time = ` ${hour}:${minute}:${second}`; // formato "dd/mm/yyyy HH:MM:SS"
 
-//document.getElementById("genera").addEventListener("click", generaCSV);
+  const conferma =  confirm("Vuoi scaricare file importazione listino di vendita?");
+if (!conferma) {
+  console.log("Download CSV annullato dall'utente");
+  return; // l'utente ha annullato l'operazione
+} 
+
+  // === COLONNE PER-RIGA ===
+  const codice = parseColumn(document.getElementById("codice").value);
+  const prezzo = parseColumn(document.getElementById("prezzo").value);
+
+  // numero righe
+
+  const rows = codice.length;
+
+  let output = [];
+  // HEADER CSV
+  output.push([
+    "CODICE ART",
+    "DESCR",
+    "PREZZO",
+    "COD.BAR",
+    "NETTO",
+    "SC1",
+    "SC2",
+    "SC3",
+    "SCS",
+    "TIPO CLIFOR",
+    "COD CLIFOR",
+    "MARCA",
+    "MODELLO",
+    "GENERE",
+    "FAMIGLIA",
+    "SETTORE",
+    "LISTINO ID",
+    "SETT.GEST",
+    "CODCLI",
+    "DATA INIZIO VAL", 
+    "QTA", 
+    "FLAG NETTI",
+  ].join("|"));
+
+  // RIGHE
+  for (let i = 0; i < rows; i++) {
+    output.push([
+      //i + 1,                 // progressivo
+      codice[i],        // codice articolo
+      "",               // descrizione vuota
+      prezzo[i],       // prezzo
+      "",               // codice a barre vuoto   
+      "0",              // netto 
+      "0",              // SC1
+      "0",              // SC2
+      "0",              // SC3
+      "",              // SCS
+      "C",              // TIPO CLIFOR
+      "0",              // COD CLIFOR
+      ".",              // MARCA
+      ".",              // MODELLO
+      ".",              // GENERE
+      ".",            // FAMIGLIA
+      "0",            // SETTORE
+      "1",            // LISTINO ID
+      "0",            // SETT.GEST
+      "0",            // CODCLI
+      today,         // DATA INIZIO VAL
+      "0",            // QTA
+      "N",            // FLAG NETTI
+      //
+    ].join("|"));
+  }
+ const blob = new Blob([output.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "listino_" + Time + ".csv";
+  link.click();
+
+
+  //downloadCSV(output, "ordine_fornitore.csv");
+}
+/*document.addEventListener("DOMContentLoaded", () => {
+  Storage.get("formData", data => {
+    if (!data) return;
+
+    fornitore.value   = data.fornitore   ?? "";
+    codice.value      = data.codice      ?? "";
+    descrizione.value = data.descrizione ?? "";
+    barcode.value     = data.barcode     ?? "";
+    costo.value       = data.costo       ?? "";
+    quantita.value    = data.quantita    ?? "";
+    prezzo.value      = data.prezzo      ?? "";
+
+    update();
+  });
+});
+*/

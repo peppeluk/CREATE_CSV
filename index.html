@@ -9,7 +9,7 @@
 <body>
 
   <header>
-    <h1>Generatore CSV per importazione articoli e ordini a fornitore</h1>
+    <h1>Generatore CSV per importazione articoli, ordini a fornitore e listini di vendita</h1>
     <p class="subtitle">Incolla le colonne, valida i dati e genera il CSV formattato</p>
   </header>
 
@@ -52,6 +52,11 @@
       <textarea id="quantita" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
     </label>
 
+     <label class="field">
+      <span>Prezzo</span>
+      <textarea id="prezzo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+    </label>
+
     <div class="info">
       <span id="righeInfo">Righe rilevate: 0</span>
     </div>
@@ -59,12 +64,16 @@
 
   <!-- ================= AZIONI ================= -->
   <section class="actions">
-    <button id="genera" onclick="generaCSV()" disabled>
+    <button id="genera" disabled>
       ⬇️ Genera CSV importazione Articoli
     </button>
 
-    <button id="genera_ordine" onclick="generaCSVOrdineFornitore()" disabled>
+    <button id="genera_ordine"  disabled>
    ⬇️ Genera CSV ORDINE FORNITORE
+    </button>
+
+    <button id="genera_listino"  disabled>
+   ⬇️ Genera CSV LISTINO di vendita
     </button>
 
     <button id="reset">
@@ -78,7 +87,9 @@
     </small>
 
   </footer>
-
+  <script src="storage.js"></script>
   <script src="app.js"></script>
+  
+
 </body>
 </html>
