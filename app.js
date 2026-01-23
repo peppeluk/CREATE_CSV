@@ -315,7 +315,7 @@ for (let i = 0; i < rows; i++) {
       "1",                       // QTA X CONF
       "NR",                      // UNI MIS
       //costo[i].replace(",", "."),// Costo
-     costo[i] || "",        // Costo senza conversione e lascia vuoto se non presente
+     costo[i] || 0,        // Costo senza conversione e inserisce zero se non presente o vuoto
       "",                        // NOTE
       "0",                       // QUANTITA MIN. ORDINABILE
       "F",                       // TIPO C/F
@@ -511,3 +511,4 @@ if (!conferma) {
   });
 });
 */
+
