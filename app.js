@@ -232,7 +232,7 @@ function showMappingUI(data) {
       });
 
       const spacer = document.createElement("span");
-      spacer.textContent = " descrizione 2: ";
+      spacer.textContent = " seconda: ";
       spacer.style.marginLeft = "8px";
 
       const select2 = document.createElement("select");
