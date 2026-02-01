@@ -1,6 +1,7 @@
 body {
   font-family: Arial, sans-serif;
-  width: 600px;
+  max-width: 900px;
+  margin: 0 auto;
   padding: 10px;
 }
 
@@ -12,13 +13,146 @@ textarea {
   width: 100%;
   height: 80px;
   font-family: monospace;
+  box-sizing: border-box;
 }
 
-input {
+/* =========================
+   GRIGLIA CAMPI SEZIONE 3
+   ========================= */
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: 30ch 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  /* Auto-posizionamento intelligente */
+  grid-auto-flow: row;
+}
+
+/* Posizionamenti semantici (solo quando servono) */
+.field--code {
+  grid-column: 1;
+}
+
+.field--description {
+  grid-column: 2;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.fields-grid .field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.fields-grid .field > span {
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.fields-grid textarea {
   width: 100%;
+  min-height: 80px;
+  /*max-height: 400px;*/
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* =========================
+   INPUT, SELECT, BUTTON
+   ========================= */
+
+input:not([type="file"]) {
+  width: 100%;
+}
+
+input[type="file"] {
+  width: auto;
+}
+
+select {
+  min-width: 140px;
 }
 
 button {
   padding: 8px 15px;
   margin-right: 10px;
+}
+
+/* =========================
+   MAPPING DINAMICO CAMPI
+   ========================= */
+
+#mappingFields > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+/* Evita deformazioni quando lo spazio si riduce */
+#mappingFields > div > * {
+  flex-shrink: 0;
+}
+
+#mappingFields label {
+  margin-right: 6px;
+}
+
+#mappingFields select,
+#mappingFields input[type="file"],
+#mappingFields .lookup-controls,
+#mappingFields span {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#mappingFields select {
+  min-width: 150px;
+  max-width: 45%;
+}
+
+.lookup-controls {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.lookup-preview {
+  margin-top: 8px;
+  width: 100%;
+  overflow: auto;
+}
+
+#filePreview table,
+.lookup-preview table {
+  width: 100%;
+}
+
+/* =========================
+   INDICATORI MAPPING
+   ========================= */
+
+/* Quadratino colore accanto ai select */
+.map-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Bordo sinistro colorato del select */
+#mappingFields select[data-field] {
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  border-left-width: 6px;
+  border-left-style: solid;
+  border-left-color: transparent;
 }

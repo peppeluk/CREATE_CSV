@@ -3,7 +3,7 @@
   "name": "Generatore CSV Articoli",
   "version": "1.0",
   "permissions": ["storage"],
-  "description": "Genera CSV strutturati da colonne incollate",
+  "description": "Genera CSV strutturati da colonne incollate o da file di testo.",
   "action": {
     "default_popup": "index.html"
   }

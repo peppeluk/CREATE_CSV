@@ -111,6 +111,16 @@ let fileData = null; // dati caricati dal file
 let lookupMap = null; // mappa per barcode da file esterno: codice -> barcode
 const REQUIRED_FIELDS = ["codice", "descrizione", "barcode", "costo", "quantita", "prezzo"];
 
+// Mappa colori condivisa per preview e per le opzioni dei select
+const FIELD_COLOR_MAP = {
+  codice: '#fde3ef',      // blu chiaro
+  descrizione: '#f3e5f5', // viola chiaro
+  barcode: '#fce4ec',     // rosa chiaro
+  costo: '#e8eff5',       // verde chiaro
+  quantita: '#e7ffe0',    // arancione chiaro
+  prezzo: '#fef5e7'       // giallo chiaro
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("fileInput");
   if (fileInput) {
@@ -232,7 +242,7 @@ function showMappingUI(data) {
       });
 
       const spacer = document.createElement("span");
-      spacer.textContent = " seconda: ";
+      spacer.textContent = " descrizione_2: ";
       spacer.style.marginLeft = "8px";
 
       const select2 = document.createElement("select");
@@ -255,9 +265,9 @@ function showMappingUI(data) {
       div.appendChild(spacer);
       div.appendChild(select2);
       
-      // Aggiorna preview quando cambiano i mapping
-      select1.addEventListener('change', () => fileData && showPreview(fileData, Object.keys(fileData[0])));
-      select2.addEventListener('change', () => fileData && showPreview(fileData, Object.keys(fileData[0])));
+      // Aggiorna preview quando cambiano i mapping e sincronizza i colori
+      select1.addEventListener('change', () => { if (fileData) showPreview(fileData, Object.keys(fileData[0] || {})); refreshMappingSelectColors(); });
+      select2.addEventListener('change', () => { if (fileData) showPreview(fileData, Object.keys(fileData[0] || {})); refreshMappingSelectColors(); });
       
       mappingFields.appendChild(div);
       return;
@@ -294,7 +304,7 @@ function showMappingUI(data) {
       infoSpan.textContent = "";
 
       const fileLabel = document.createElement("label");
-      fileLabel.textContent = " Carica file lookup: ";
+      fileLabel.textContent = " Carica file per ricerca codice a barre: ";
       fileLabel.style.marginLeft = "8px";
 
       const fileInputLookup = document.createElement("input");
@@ -303,6 +313,14 @@ function showMappingUI(data) {
       fileInputLookup.id = "barcodeLookupInput";
       fileInputLookup.style.display = "inline-block";
       fileInputLookup.style.marginLeft = "6px";
+    // quando il select cambia, aggiorna anche i colori degli option
+    const thisSelects = div.querySelectorAll('select');
+    thisSelects.forEach(s => {
+      s.addEventListener('change', () => {
+      if (fileData) showPreview(fileData, Object.keys(fileData[0] || {}));
+      refreshMappingSelectColors();
+      });
+    });
       fileInputLookup.style.marginRight = "6px";
 
       fileInputLookup.addEventListener("change", (evt) => {
@@ -366,7 +384,7 @@ function showMappingUI(data) {
             div.appendChild(lookupControls);
 
             // Aggiorna preview quando cambiano i mapping barcode lookup
-            select.addEventListener('change', () => fileData && showPreview(fileData, Object.keys(fileData[0])));
+            select.addEventListener('change', () => { if (fileData) showPreview(fileData, Object.keys(fileData[0] || {})); refreshMappingSelectColors(); });
 
             // Funzione per rigenerare la preview con i colori aggiornati
             function updateLookupPreview(selectedCodeCol, selectedBarcodeCol) {
@@ -472,9 +490,9 @@ function showMappingUI(data) {
     div.appendChild(select);
     mappingFields.appendChild(div);
 
-    // Aggiorna preview quando cambia il mapping
+    // Aggiorna preview quando cambia il mapping e sincronizza i colori
     if (field !== "descrizione" && field !== "barcode") {
-      select.addEventListener('change', () => fileData && showPreview(fileData, Object.keys(fileData[0])));
+      select.addEventListener('change', () => { if (fileData) showPreview(fileData, Object.keys(fileData[0] || {})); refreshMappingSelectColors(); });
     }
   });
 
@@ -483,6 +501,56 @@ function showMappingUI(data) {
   
   // Mostra preview
   showPreview(data, columns);
+
+  // Aggiorna colori delle option per i select di mapping
+  if (typeof refreshMappingSelectColors === 'function') refreshMappingSelectColors();
+}
+
+// Sincronizza il colore delle option nei select con i colori usati nella preview
+function refreshMappingSelectColors() {
+  try {
+    const mapping = {};
+    REQUIRED_FIELDS.forEach(field => {
+      if (field === 'descrizione') {
+        const s1 = document.getElementById('map_descrizione_1');
+        const s2 = document.getElementById('map_descrizione_2');
+        mapping[field] = [s1?.value || '', s2?.value || ''];
+      } else {
+        const sel = document.getElementById('map_' + field);
+        mapping[field] = sel ? sel.value : '';
+      }
+    });
+    const selects = document.querySelectorAll('#mappingFields select[data-field]');
+    selects.forEach(sel => {
+      const field = sel.dataset.field;
+      const selVals = Array.isArray(mapping[field]) ? mapping[field] : [mapping[field]];
+
+      // imposta bordo sinistro colorato se il select punta a una colonna mappata
+      const hasMapped = selVals.some(v => v && v === sel.value);
+      const color = hasMapped ? (FIELD_COLOR_MAP[field] || '') : 'transparent';
+      sel.style.borderLeftColor = color;
+
+      // crea o aggiorna l'indicatore accanto al select
+      let indicator = sel.nextElementSibling;
+      if (!indicator || !indicator.classList || !indicator.classList.contains('map-indicator')) {
+        indicator = document.createElement('span');
+        indicator.className = 'map-indicator';
+        sel.insertAdjacentElement('afterend', indicator);
+      }
+
+      if (hasMapped) {
+        indicator.style.backgroundColor = FIELD_COLOR_MAP[field] || '';
+        indicator.title = `Mappato come ${field}`;
+        indicator.style.display = 'inline-block';
+      } else {
+        indicator.style.backgroundColor = 'transparent';
+        indicator.title = '';
+        indicator.style.display = 'none';
+      }
+    });
+  } catch (e) {
+    console.warn('refreshMappingSelectColors error', e);
+  }
 }
 
 function showPreview(data, columns) {
@@ -493,14 +561,7 @@ function showPreview(data, columns) {
   if (!previewArea) return;
 
   // Palette di colori per i campi mappati
-  const colorMap = {
-    codice: '#e3f2fd',      // blu chiaro
-    descrizione: '#f3e5f5', // viola chiaro
-    barcode: '#fce4ec',     // rosa chiaro
-    costo: '#e8f5e9',       // verde chiaro
-    quantita: '#fff3e0',    // arancione chiaro
-    prezzo: '#fef5e7'       // giallo chiaro
-  };
+  const colorMap = FIELD_COLOR_MAP;
 
   // Leggi i mapping attuali
   const mapping = {};
@@ -551,6 +612,9 @@ function showPreview(data, columns) {
     headerRow.appendChild(th);
   });
   previewHead.appendChild(headerRow);
+
+  // Colora le opzioni dei select nel mapping in base ai mapping correnti
+  if (typeof refreshMappingSelectColors === 'function') refreshMappingSelectColors();
 
   // Prime 5 righe
   previewBody.innerHTML = "";
@@ -1079,6 +1143,56 @@ function generaCSVlistino() {
   }
   showFinalPreview('Listino Vendita');
 }
+/* Sincronizza l'altezza di tutte le textarea quando una viene ridimensionata */
+
+function syncTextareasHeight() {
+  const textareas = document.querySelectorAll('.fields-grid textarea');
+
+  if (!textareas.length) return;
+
+  const observer = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      const newHeight = entry.target.offsetHeight;
+
+      textareas.forEach(t => {
+        if (t !== entry.target) {
+          t.style.height = newHeight + 'px';
+        }
+      });
+
+      localStorage.setItem('textareaHeight', newHeight);
+    }
+  });
+
+  textareas.forEach(t => observer.observe(t));
+
+  // Ripristina altezza salvata
+  const savedHeight = localStorage.getItem('textareaHeight');
+  if (savedHeight) {
+    textareas.forEach(t => {
+      t.style.height = savedHeight + 'px';
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', syncTextareasHeight);
+
+function resetTextareaHeight() {
+  const textareas = document.querySelectorAll('.fields-grid textarea');
+
+  textareas.forEach(t => {
+    t.style.height = '';
+  });
+
+  localStorage.removeItem('textareaHeight');
+}
+
+
+
+
+
+
+
 /*document.addEventListener("DOMContentLoaded", () => {
   Storage.get("formData", data => {
     if (!data) return;

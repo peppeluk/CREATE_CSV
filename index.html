@@ -10,7 +10,7 @@
 
   <header>
     <h1>Generatore CSV per importazione articoli, ordini a fornitore e listini di vendita</h1>
-    <p class="subtitle">Incolla le colonne, valida i dati e genera il CSV formattato</p>
+    <p class="subtitle">Incolla le colonne o importa CSV, valida i dati e genera il CSV formattato</p>
   </header>
 
   <!-- ================= DATI GLOBALI ================= -->
@@ -19,33 +19,32 @@
 
     <label class="field">
       <span>Codice Fornitore</span>
-      <input type="text" id="fornitore" placeholder="Es. 100648" oninput="autosave(); update();">
+      <input type="text" id="fornitore" placeholder="Es. 100785 Fornitore generico" oninput="autosave(); update();">
     </label>
   </section>
 
   <!-- ================= CARICA FILE ================= -->
   <section class="panel">
     <h2>2️⃣ Carica file CSV (opzionale)</h2>
-    
-    <p style="font-size: 0.9em; color: #666;">
-      <strong>Nota:</strong> Se hai un file Excel (.XLSX), convertilo in CSV prima di caricarlo 
-      (File → Esporta come → CSV in Excel)
+
+    <p class="note">
+      <strong>Nota:</strong> Se hai un file Excel (.XLSX), convertilo in CSV prima di caricarlo.
     </p>
-    
+
     <label class="field">
       <span>Seleziona file CSV</span>
       <input type="file" id="fileInput" accept=".csv" />
     </label>
 
-    <div id="mappingArea" style="display: none;">
+    <div id="mappingArea" hidden>
       <h3>Mappa le colonne del file</h3>
       <div id="mappingFields"></div>
       <button id="applyMapping">Applica mappatura</button>
     </div>
 
-    <div id="filePreview" style="display: none;">
+    <div id="filePreview" hidden>
       <h3>Anteprima righe</h3>
-      <table id="previewTable" style="border-collapse: collapse; width: 100%; font-size: 0.9em;">
+      <table id="previewTable">
         <thead id="previewHead"></thead>
         <tbody id="previewBody"></tbody>
       </table>
@@ -56,35 +55,38 @@
   <section class="panel">
     <h2>3️⃣ Incolla colonne</h2>
 
-    <label class="field">
-      <span>Codice Articolo</span>
-      <textarea id="codice" placeholder="Una riga = un articolo" oninput="autosave(); update();"></textarea>
-    </label>
+    <div class="fields-grid">
+      <label class="field field--code">
+        <span>Codice Articolo</span>
+        <textarea id="codice" placeholder="Una riga = un articolo" oninput="autosave(); update();"></textarea>
+      </label>
 
-    <label class="field">
-      <span>Descrizione articolo</span>
-      <textarea id="descrizione" placeholder="Max 70 caratteri (35 + 35)" oninput="autosave(); update();"></textarea>
-    </label>
+      <label class="field field--description">
+        <span>Descrizione articolo</span>
+        <textarea id="descrizione" placeholder="Max 70 caratteri (35 + 35)" oninput="autosave(); update();"></textarea>
+      </label>
 
-    <label class="field">
-      <span>Codice a barre</span>
-      <textarea id="barcode" placeholder="EAN / Barcode" oninput="autosave(); update();"></textarea>
-    </label>
+      <label class="field">
+        <span>Codice a barre</span>
+        <textarea id="barcode" placeholder="EAN / Barcode" oninput="autosave(); update();"></textarea>
+      </label>
 
-    <label class="field">
-      <span>Costo</span>
-      <textarea id="costo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
-    </label>
+      <label class="field">
+        <span>Costo</span>
+        <textarea id="costo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+      </label>
 
-    <label class="field">
-      <span>Quantità ordine fornitore</span>
-      <textarea id="quantita" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
-    </label>
+      <label class="field">
+        <span>Quantità ordine fornitore</span>
+        <textarea id="quantita" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+      </label>
 
-     <label class="field">
-      <span>Prezzo</span>
-      <textarea id="prezzo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
-    </label>
+      <label class="field">
+        <span>Prezzo</span>
+        <textarea id="prezzo" placeholder="Numerico (virgola o punto)" oninput="autosave(); update();"></textarea>
+      </label>
+
+    </div>
 
     <div class="info">
       <span id="righeInfo">Righe rilevate: 0</span>
@@ -93,32 +95,22 @@
 
   <!-- ================= AZIONI ================= -->
   <section class="actions">
-    <button id="genera" disabled>
-      ⬇️ Genera CSV importazione Articoli
-    </button>
-
-    <button id="genera_ordine"  disabled>
-   ⬇️ Genera CSV ORDINE FORNITORE
-    </button>
-
-    <button id="genera_listino"  disabled>
-   ⬇️ Genera CSV LISTINO di vendita
-    </button>
-
-    <button id="reset">
-      🔄 Reset
-    </button>
+    <button id="genera" disabled>⬇️ Genera CSV importazione Articoli</button>
+    <button id="genera_ordine" disabled>⬇️ Genera CSV ORDINE FORNITORE</button>
+    <button id="genera_listino" disabled>⬇️ Genera CSV LISTINO di vendita</button>
+    <button id="reset">🔄 Reset</button>
+    <button type="button" onclick="resetTextareaHeight()" style="margin-left:10px;"> Reset altezza campi</button>
   </section>
 
   <footer>
-    <small>generatore CSV per importazione aritcoli su eB
-    <br>Creato da Giuseppe Lucchese - 2025    
+    <small>
+      Generatore CSV per importazione articoli su eB<br>
+      Creato da Giuseppe Lucchese - 2025
     </small>
-
   </footer>
+
   <script src="storage.js"></script>
   <script src="app.js"></script>
-  
 
 </body>
 </html>
